@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
 using WeatherApp.Services;
+using Windows.Devices.Geolocation;
 
 namespace WeatherApp.ViewModels
 {
@@ -14,9 +15,9 @@ namespace WeatherApp.ViewModels
     {
         private readonly WeatherCacheService _cacheService;
 
-        private string _location = "Friesland, Netherlands";
-        private double _latitude = 53.029893;
-        private double _longitude = 5.6570753;
+        private string _location = "Getting location...";
+        private double _latitude;
+        private double _longitude;
         private double _temperature;
         private string _windDirection = string.Empty;
         private double _windSpeed;
@@ -178,8 +179,45 @@ namespace WeatherApp.ViewModels
             timer.Tick += (s, e) => CurrentDate = DateTime.Now;
             timer.Start();
             
-            // Initial load
+            // Initial load with location
             LoadWeatherDataAsync(false).ConfigureAwait(false);
+        }
+
+        private async Task GetLocationAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                StatusMessage = "Getting device location...";
+
+                var geolocator = new Geolocator();
+                var geoposition = await geolocator.GetGeopositionAsync();
+                
+                if (geoposition != null)
+                {
+                    var coordinate = geoposition.Coordinate;
+                    _latitude = coordinate.Point.Position.Latitude;
+                    _longitude = coordinate.Point.Position.Longitude;
+                    
+                    Location = $"Location: {_latitude:F6}, {_longitude:F6}";
+                    StatusMessage = "Location obtained successfully";
+                    return;
+                }
+                
+                StatusMessage = "Failed to get location. Using default location.";
+                // Fall back to default location (Friesland)
+                _latitude = 53.029893;
+                _longitude = 5.6570753;
+                Location = "Friesland, Netherlands";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Location error: {ex.Message}. Using default location.";
+                // Fall back to default location (Friesland)
+                _latitude = 53.029893;
+                _longitude = 5.6570753;
+                Location = "Friesland, Netherlands";
+            }
         }
 
         public async Task LoadWeatherDataAsync(bool forceRefresh = false)
@@ -189,6 +227,13 @@ namespace WeatherApp.ViewModels
             try
             {
                 IsLoading = true;
+                
+                // Get location first if we don't have it
+                if (_latitude == 0 && _longitude == 0)
+                {
+                    await GetLocationAsync();
+                }
+
                 StatusMessage = forceRefresh ? "Fetching fresh weather data..." : "Loading weather data...";
 
                 var weatherData = await _cacheService.GetWeatherDataAsync(_latitude, _longitude, forceRefresh);
