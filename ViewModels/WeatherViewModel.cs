@@ -139,12 +139,12 @@ namespace WeatherApp.ViewModels
             {
                 try
                 {
-                    var uri = $"/Assets/{CurrentWeather}.png";
+                    var uri = $"pack://application:,,,/WeatherApp;component/Assets/{CurrentWeather}.png";
                     System.Diagnostics.Debug.WriteLine($"Loading weather icon from: {uri}");
                     
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(uri, UriKind.Relative);
+                    bitmap.UriSource = new Uri(uri);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
@@ -155,27 +155,7 @@ namespace WeatherApp.ViewModels
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error loading weather icon: {ex}");
-                    try
-                    {
-                        // Try absolute pack URI format
-                        var uri = $"pack://application:,,,/WeatherApp;component/Assets/{CurrentWeather}.png";
-                        System.Diagnostics.Debug.WriteLine($"Trying absolute pack URI format: {uri}");
-                        
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(uri);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-                        
-                        System.Diagnostics.Debug.WriteLine("Weather icon loaded successfully with absolute pack URI");
-                        return bitmap;
-                    }
-                    catch (Exception ex2)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading weather icon with absolute pack URI: {ex2}");
-                        return null;
-                    }
+                    return null;
                 }
             }
         }
