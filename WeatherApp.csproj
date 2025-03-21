@@ -8,4 +8,11 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Assets\*.png" />
+    <Resource Include="Assets\ClearSky.png" />
+    <Resource Include="Assets\PartlyCloudy.png" />
+    <Resource Include="Assets\Cloudy.png" />
+  </ItemGroup>
+
 </Project>
