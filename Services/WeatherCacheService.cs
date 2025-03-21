@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -22,7 +23,6 @@ namespace WeatherApp.Services
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "WeatherApp/1.0 (https://github.com/Zaibatsu89/WeatherApp)");
-            _httpClient.DefaultRequestHeaders.Add("Accept", "application/xml");
             
             // Create cache directory in user's AppData folder
             _cacheDirectory = Path.Combine(
@@ -84,25 +84,50 @@ namespace WeatherApp.Services
             // Fetch fresh data
             try 
             {
-                // Use invariant culture to ensure decimal points are used instead of commas
-                string apiUrl = string.Format(
+                // Get sun data first
+                var sunriseData = await GetSunriseDataAsync(latitude, longitude);
+
+                // Now get weather data
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Add("Accept", "application/xml");
+                
+                string weatherApiUrl = string.Format(
                     System.Globalization.CultureInfo.InvariantCulture,
                     "https://api.met.no/weatherapi/locationforecast/2.0/classic?lat={0:F6}&lon={1:F6}",
                     latitude,
                     longitude
                 );
                 
-                System.Diagnostics.Debug.WriteLine($"Fetching weather data from: {apiUrl}");
+                System.Diagnostics.Debug.WriteLine($"Fetching weather data from: {weatherApiUrl}");
                 
-                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+                HttpResponseMessage weatherResponse = await _httpClient.GetAsync(weatherApiUrl);
                 
-                if (response.IsSuccessStatusCode)
+                if (weatherResponse.IsSuccessStatusCode)
                 {
-                    string xmlContent = await response.Content.ReadAsStringAsync();
+                    string weatherXmlContent = await weatherResponse.Content.ReadAsStringAsync();
                     
                     try 
                     {
-                        _cachedWeatherData = XDocument.Parse(xmlContent);
+                        _cachedWeatherData = XDocument.Parse(weatherXmlContent);
+                        
+                        // Add sunrise/sunset data if available
+                        if (sunriseData?.Properties != null)
+                        {
+                            var weatherDataRoot = _cachedWeatherData.Root;
+                            if (weatherDataRoot != null)
+                            {
+                                // Create sunrise element with ISO 8601 formatted time
+                                var sunriseElement = new XElement("sunrise",
+                                    new XAttribute("time", sunriseData.Properties.Sunrise.Time));
+                                
+                                // Create sunset element with ISO 8601 formatted time
+                                var sunsetElement = new XElement("sunset",
+                                    new XAttribute("time", sunriseData.Properties.Sunset.Time));
+                                
+                                weatherDataRoot.Add(sunriseElement);
+                                weatherDataRoot.Add(sunsetElement);
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -112,11 +137,11 @@ namespace WeatherApp.Services
                     _lastCachedLocation = locationKey;
                     
                     // Parse cache expiration from HTTP headers or use default
-                    _cacheExpirationTime = GetExpirationTimeFromHeaders(response) ?? 
+                    _cacheExpirationTime = GetExpirationTimeFromHeaders(weatherResponse) ?? 
                                          DateTime.UtcNow.Add(_defaultCacheDuration);
 
                     // Save to file cache
-                    await File.WriteAllTextAsync(cacheFilePath, xmlContent);
+                    await File.WriteAllTextAsync(cacheFilePath, _cachedWeatherData.ToString());
                     
                     var metadata = new CacheMetadata
                     {
@@ -132,25 +157,65 @@ namespace WeatherApp.Services
                 }
                 
                 // Handle specific HTTP errors
-                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                if (weatherResponse.StatusCode == HttpStatusCode.TooManyRequests)
                 {
                     throw new WeatherServiceException("Rate limit exceeded. Try again later.", WeatherServiceError.RateLimited);
                 }
                 
                 // For BadRequest, try to get more details from the response
-                if (response.StatusCode == HttpStatusCode.BadRequest)
+                if (weatherResponse.StatusCode == HttpStatusCode.BadRequest)
                 {
-                    string errorContent = await response.Content.ReadAsStringAsync();
+                    string errorContent = await weatherResponse.Content.ReadAsStringAsync();
                     throw new WeatherServiceException($"API request failed: {errorContent}", WeatherServiceError.RequestFailed);
                 }
                 
-                throw new WeatherServiceException($"API request failed with status code: {response.StatusCode}", 
+                throw new WeatherServiceException($"API request failed with status code: {weatherResponse.StatusCode}", 
                                                WeatherServiceError.RequestFailed);
             }
             catch (HttpRequestException ex)
             {
                 throw new WeatherServiceException($"Network error while fetching weather data: {ex.Message}", 
                                                WeatherServiceError.RequestFailed);
+            }
+        }
+
+        private async Task<SunriseData?> GetSunriseDataAsync(double latitude, double longitude)
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+                
+                string apiUrl = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "https://api.met.no/weatherapi/sunrise/3.0/sun?lat={0:F6}&lon={1:F6}&date={2:yyyy-MM-dd}",
+                    latitude,
+                    longitude,
+                    DateTime.Now
+                );
+                
+                System.Diagnostics.Debug.WriteLine($"Fetching sun data from: {apiUrl}");
+                
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonContent = await response.Content.ReadAsStringAsync();
+                    System.Diagnostics.Debug.WriteLine($"Received sun data: {jsonContent}");
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    return JsonSerializer.Deserialize<SunriseData>(jsonContent, options);
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Failed to get sunrise data: {response.StatusCode}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting sunrise data: {ex.Message}");
+                return null;
             }
         }
 
@@ -208,6 +273,47 @@ namespace WeatherApp.Services
             public DateTime CreationTime { get; set; }
             public DateTime ExpirationTime { get; set; }
             public required string Location { get; set; }
+        }
+
+        private class SunriseData
+        {
+            public string Type { get; set; } = string.Empty;
+            public Geometry Geometry { get; set; } = new();
+            public When When { get; set; } = new();
+            public SunProperties Properties { get; set; } = new();
+        }
+
+        private class Geometry
+        {
+            public string Type { get; set; } = string.Empty;
+            public double[] Coordinates { get; set; } = Array.Empty<double>();
+        }
+
+        private class When
+        {
+            public string[] Interval { get; set; } = Array.Empty<string>();
+        }
+
+        private class SunProperties
+        {
+            public string Body { get; set; } = string.Empty;
+            public SunEvent Sunrise { get; set; } = new();
+            public SunEvent Sunset { get; set; } = new();
+            public SolarEvent Solarnoon { get; set; } = new();
+            public SolarEvent Solarmidnight { get; set; } = new();
+        }
+
+        private class SunEvent
+        {
+            public string Time { get; set; } = string.Empty;
+            public double Azimuth { get; set; }
+        }
+
+        private class SolarEvent
+        {
+            public string Time { get; set; } = string.Empty;
+            public double Disc_centre_elevation { get; set; }
+            public bool Visible { get; set; }
         }
     }
 

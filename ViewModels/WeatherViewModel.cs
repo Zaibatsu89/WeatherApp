@@ -29,6 +29,8 @@ namespace WeatherApp.ViewModels
         private string _statusMessage = string.Empty;
         private DateTime _lastUpdated;
         private DateTime _currentDate = DateTime.Now;
+        private DateTime? _sunrise;
+        private DateTime? _sunset;
 
         public string Location { 
             get => _location; 
@@ -104,6 +106,21 @@ namespace WeatherApp.ViewModels
             get => _currentDate;
             private set => SetProperty(ref _currentDate, value);
         }
+
+        public DateTime? Sunrise
+        {
+            get => _sunrise;
+            set => SetProperty(ref _sunrise, value);
+        }
+    
+        public DateTime? Sunset
+        {
+            get => _sunset;
+            set => SetProperty(ref _sunset, value);
+        }
+    
+        public string FormattedSunrise => Sunrise?.ToString("HH:mm") ?? "--:--";
+        public string FormattedSunset => Sunset?.ToString("HH:mm") ?? "--:--";
 
         public bool ShowWeatherContent => !IsLoading;
 
@@ -283,10 +300,20 @@ namespace WeatherApp.ViewModels
         {
             try
             {
+                // Find sunrise/sunset data from the root level
+                var sunriseElement = weatherData.Descendants("sunrise").FirstOrDefault();
+                var sunsetElement = weatherData.Descendants("sunset").FirstOrDefault();
+                
+                if (sunriseElement?.Attribute("time")?.Value is string sunriseVal)
+                    Sunrise = DateTime.Parse(sunriseVal);
+                
+                if (sunsetElement?.Attribute("time")?.Value is string sunsetVal)
+                    Sunset = DateTime.Parse(sunsetVal);
+
                 // Find the first location element that has forecast data
                 var timeElement = weatherData.Descendants("time")
                     .FirstOrDefault(e => e.Attribute("datatype")?.Value == "forecast");
-                    
+                        
                 if (timeElement != null)
                 {
                     var location = timeElement.Element("location");
@@ -391,6 +418,8 @@ namespace WeatherApp.ViewModels
             {
                 OnPropertyChanged(nameof(FormattedLastUpdated));
             }
+            if (propertyName == nameof(Sunrise)) OnPropertyChanged(nameof(FormattedSunrise));
+            if (propertyName == nameof(Sunset)) OnPropertyChanged(nameof(FormattedSunset));
             
             return true;
         }

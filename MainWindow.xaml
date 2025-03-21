@@ -231,6 +231,44 @@
                             Foreground="White"
                             Text="{Binding FormattedCloudiness}" />
                     </Grid>
+
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Grid.Column="0"
+                            Width="100"
+                            FontSize="16"
+                            Foreground="#ecf0f1"
+                            Text="Sunrise:" />
+                        <TextBlock
+                            Grid.Column="1"
+                            FontSize="16"
+                            FontWeight="Medium"
+                            Foreground="White"
+                            Text="{Binding FormattedSunrise}" />
+                    </Grid>
+
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Grid.Column="0"
+                            Width="100"
+                            FontSize="16"
+                            Foreground="#ecf0f1"
+                            Text="Sunset:" />
+                        <TextBlock
+                            Grid.Column="1"
+                            FontSize="16"
+                            FontWeight="Medium"
+                            Foreground="White"
+                            Text="{Binding FormattedSunset}" />
+                    </Grid>
                 </StackPanel>
             </Border>
         </Grid>

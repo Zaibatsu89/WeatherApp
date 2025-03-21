@@ -59,6 +59,12 @@ namespace WeatherApp
         [XmlElement("maxTemperature")]
         public MaxTemperature? MaxTemperature { get; set; }
 
+        [XmlElement("sunrise")]
+        public Sunrise? Sunrise { get; set; }
+
+        [XmlElement("sunset")]
+        public Sunset? Sunset { get; set; }
+
         [XmlAttribute("latitude")]
         public double Latitude { get; set; }
 
@@ -130,5 +136,17 @@ namespace WeatherApp
     {
         [XmlAttribute("value")]
         public double Value { get; set; }
+    }
+
+    public class Sunrise
+    {
+        [XmlAttribute("time")]
+        public string? Time { get; set; }
+    }
+
+    public class Sunset
+    {
+        [XmlAttribute("time")]
+        public string? Time { get; set; }
     }
 }
