@@ -82,6 +82,12 @@ namespace WeatherApp
     {
         [XmlAttribute("mps")]
         public double Mps { get; set; }
+
+        [XmlAttribute("beaufort")]
+        public int Beaufort { get; set; }
+
+        [XmlAttribute("name")]
+        public string? Name { get; set; }
     }
 
     public class WindDirection

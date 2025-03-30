@@ -21,6 +21,7 @@ namespace WeatherApp.ViewModels
         private double _temperature;
         private string _windDirection = string.Empty;
         private double _windSpeed;
+        private int _beaufortScale;
         private double _humidity;
         private double _pressure;
         private double _cloudiness;
@@ -50,6 +51,12 @@ namespace WeatherApp.ViewModels
         public double WindSpeed { 
             get => _windSpeed; 
             set => SetProperty(ref _windSpeed, value); 
+        }
+
+        public int BeaufortScale
+        {
+            get => _beaufortScale; 
+            set => SetProperty(ref _beaufortScale, value);
         }
         
         public double Humidity { 
@@ -125,7 +132,7 @@ namespace WeatherApp.ViewModels
         public bool ShowWeatherContent => !IsLoading;
 
         public string FormattedTemperature => $"{Temperature:F1}°C";
-        public string FormattedWindSpeed => $"{WindSpeed:F1} m/s";
+        public string FormattedWindSpeed => $"{WindSpeed:F1} m/s ({BeaufortScale} Bft)";
         public string FormattedHumidity => $"{Humidity:F1}%";
         public string FormattedPressure => $"{Pressure:F0} hPa";
         public string FormattedCloudiness => $"{Cloudiness:F0}%";
@@ -315,6 +322,9 @@ namespace WeatherApp.ViewModels
                         
                         if (windSpeed?.Attribute("mps")?.Value is string windSpeedVal)
                             WindSpeed = double.Parse(windSpeedVal, System.Globalization.CultureInfo.InvariantCulture);
+
+                        if (windSpeed?.Attribute("beaufort")?.Value is string beaufortVal)
+                            BeaufortScale = int.Parse(beaufortVal, System.Globalization.CultureInfo.InvariantCulture);
                         
                         if (humidity?.Attribute("value")?.Value is string humidityVal)
                             Humidity = double.Parse(humidityVal, System.Globalization.CultureInfo.InvariantCulture);
@@ -327,7 +337,7 @@ namespace WeatherApp.ViewModels
 
                         // Update the weather symbol after all properties are set
                         CurrentWeather = DetermineWeatherSymbol();
-                        System.Diagnostics.Debug.WriteLine($"Weather data parsed: Temp={Temperature:F1}°C, Wind={WindDirection} {WindSpeed:F1}m/s, Clouds={Cloudiness:F1}%, Symbol={CurrentWeather}");
+                        System.Diagnostics.Debug.WriteLine($"Weather data parsed: Temp={Temperature:F1}°C, Wind={WindDirection} {WindSpeed:F1}m/s ({BeaufortScale} Bft), Clouds={Cloudiness:F1}%, Symbol={CurrentWeather}");
                     }
                     else
                     {
@@ -386,6 +396,7 @@ namespace WeatherApp.ViewModels
             // Also raise property changed for formatted properties
             if (propertyName == nameof(Temperature)) OnPropertyChanged(nameof(FormattedTemperature));
             if (propertyName == nameof(WindSpeed)) OnPropertyChanged(nameof(FormattedWindSpeed));
+            if (propertyName == nameof(BeaufortScale)) OnPropertyChanged(nameof(FormattedWindSpeed));
             if (propertyName == nameof(Humidity)) OnPropertyChanged(nameof(FormattedHumidity));
             if (propertyName == nameof(Pressure)) OnPropertyChanged(nameof(FormattedPressure));
             if (propertyName == nameof(Cloudiness)) 
