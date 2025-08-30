@@ -1,6 +1,6 @@
-# WeatherApp
+# Weather app
 
-WeatherApp is een C#-applicatie waarmee je eenvoudig actuele weersinformatie kunt opvragen en bekijken. De app is bedoeld als demonstratieproject voor het werken met API's, user interfaces en data-analyse binnen het .NET-ecosysteem.
+WeatherApp is een C#-applicatie waarmee je eenvoudig actuele weersinformatie kunt opvragen en bekijken. De app is bedoeld als demonstratieproject voor het werken met API's, user interfaces en data-analyse binnen het .NET-ecosysteem. Het is gebouwd met .NET 10.0.
 
 ## Features
 
