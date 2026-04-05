@@ -6,64 +6,64 @@ namespace WeatherApp
     public class WeatherData
     {
         [XmlElement("product")]
-        public Product? Product { get; set; }
+        public Product Product { get; set; }
     }
 
     public class Product
     {
         [XmlElement("time")]
-        public Time[]? Time { get; set; }
+        public Time[] Time { get; set; }
     }
 
     public class Time
     {
         [XmlElement("location")]
-        public Location? Location { get; set; }
+        public Location Location { get; set; }
 
         [XmlAttribute("from")]
-        public string? From { get; set; }
+        public string From { get; set; }
     }
 
     public class Location
     {
         [XmlElement("temperature")]
-        public Temperature? Temperature { get; set; }
+        public Temperature Temperature { get; set; }
 
         [XmlElement("windSpeed")]
-        public WindSpeed? WindSpeed { get; set; }
+        public WindSpeed WindSpeed { get; set; }
 
         [XmlElement("windDirection")]
-        public WindDirection? WindDirection { get; set; }
+        public WindDirection WindDirection { get; set; }
 
         [XmlElement("humidity")]
-        public Humidity? Humidity { get; set; }
+        public Humidity Humidity { get; set; }
 
         [XmlElement("pressure")]
-        public Pressure? Pressure { get; set; }
+        public Pressure Pressure { get; set; }
 
         [XmlElement("cloudiness")]
-        public Cloudiness? Cloudiness { get; set; }
+        public Cloudiness Cloudiness { get; set; }
 
         [XmlElement("dewpointTemperature")]
-        public DewpointTemperature? DewpointTemperature { get; set; }
+        public DewpointTemperature DewpointTemperature { get; set; }
 
         [XmlElement("symbol")]
-        public Symbol? Symbol { get; set; }
+        public Symbol Symbol { get; set; }
 
         [XmlElement("precipitation")]
-        public Precipitation? Precipitation { get; set; }
+        public Precipitation Precipitation { get; set; }
 
         [XmlElement("minTemperature")]
-        public MinTemperature? MinTemperature { get; set; }
+        public MinTemperature MinTemperature { get; set; }
 
         [XmlElement("maxTemperature")]
-        public MaxTemperature? MaxTemperature { get; set; }
+        public MaxTemperature MaxTemperature { get; set; }
 
         [XmlElement("sunrise")]
-        public Sunrise? Sunrise { get; set; }
+        public Sunrise Sunrise { get; set; }
 
         [XmlElement("sunset")]
-        public Sunset? Sunset { get; set; }
+        public Sunset Sunset { get; set; }
 
         [XmlAttribute("latitude")]
         public double Latitude { get; set; }
@@ -87,13 +87,13 @@ namespace WeatherApp
         public int Beaufort { get; set; }
 
         [XmlAttribute("name")]
-        public string? Name { get; set; }
+        public string Name { get; set; }
     }
 
     public class WindDirection
     {
         [XmlAttribute("name")]
-        public string? Name { get; set; }
+        public string Name { get; set; }
     }
 
     public class Humidity
@@ -123,7 +123,7 @@ namespace WeatherApp
     public class Symbol
     {
         [XmlAttribute("code")]
-        public string? Code { get; set; }
+        public string Code { get; set; }
     }
 
     public class Precipitation
@@ -147,12 +147,12 @@ namespace WeatherApp
     public class Sunrise
     {
         [XmlAttribute("time")]
-        public string? Time { get; set; }
+        public string Time { get; set; }
     }
 
     public class Sunset
     {
         [XmlAttribute("time")]
-        public string? Time { get; set; }
+        public string Time { get; set; }
     }
 }

@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "WeatherApp": {
+      "commandName": "MsixPackage"
+    }
+  }
+}

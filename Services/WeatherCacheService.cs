@@ -1,23 +1,17 @@
-// WeatherCacheService.cs
-using System;
-using System.IO;
 using System.Net;
-using System.Net.Http;
-using System.Runtime.Serialization;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace WeatherApp.Services
 {
-    public class WeatherCacheService : IDisposable
+    public partial class WeatherCacheService : IDisposable
     {
         private readonly HttpClient _httpClient;
         private readonly string _cacheDirectory;
         private readonly TimeSpan _defaultCacheDuration = TimeSpan.FromHours(1); // Met.no recommends caching for at least 1 hour
-        private XDocument? _cachedWeatherData;
+        private XDocument _cachedWeatherData;
         private DateTime _cacheExpirationTime;
-        private string? _lastCachedLocation;
+        private string _lastCachedLocation;
 
         public WeatherCacheService()
         {
@@ -179,7 +173,7 @@ namespace WeatherApp.Services
             }
         }
 
-        private async Task<SunriseData?> GetSunriseDataAsync(double latitude, double longitude)
+        private async Task<SunriseData> GetSunriseDataAsync(double latitude, double longitude)
         {
             try
             {
@@ -219,7 +213,7 @@ namespace WeatherApp.Services
             }
         }
 
-        private DateTime? GetExpirationTimeFromHeaders(HttpResponseMessage response)
+        private static DateTime? GetExpirationTimeFromHeaders(HttpResponseMessage response)
         {
             // Try to get max-age from Cache-Control header
             if (response.Headers.CacheControl?.MaxAge is TimeSpan maxAge)
@@ -286,12 +280,12 @@ namespace WeatherApp.Services
         private class Geometry
         {
             public string Type { get; set; } = string.Empty;
-            public double[] Coordinates { get; set; } = Array.Empty<double>();
+            public double[] Coordinates { get; set; } = [];
         }
 
         private class When
         {
-            public string[] Interval { get; set; } = Array.Empty<string>();
+            public string[] Interval { get; set; } = [];
         }
 
         private class SunProperties
@@ -324,14 +318,8 @@ namespace WeatherApp.Services
         ParseError
     }
 
-    public class WeatherServiceException : Exception
+    public class WeatherServiceException(string message, WeatherServiceError errorType) : Exception(message)
     {
-        public WeatherServiceError ErrorType { get; }
-
-        public WeatherServiceException(string message, WeatherServiceError errorType) 
-            : base(message)
-        {
-            ErrorType = errorType;
-        }
+        public WeatherServiceError ErrorType { get; } = errorType;
     }
 }

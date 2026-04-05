@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="WeatherApp.csproj" />
+  <Project Path="WeatherApp.csproj">
+    <Platform Project="x64" />
+    <Deploy />
+  </Project>
 </Solution>

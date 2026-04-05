@@ -1,17 +1,17 @@
-// WeatherViewModel.cs
-using System;
+using Microsoft.UI.Xaml.Media.Imaging;
+
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using System.Xml.Linq;
+
 using WeatherApp.Services;
+
 using Windows.Devices.Geolocation;
 
 namespace WeatherApp.ViewModels
 {
-    public class WeatherViewModel : INotifyPropertyChanged, IDisposable
+    public partial class WeatherViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly WeatherCacheService _cacheService;
 
@@ -29,53 +29,53 @@ namespace WeatherApp.ViewModels
         private bool _isLoading;
         private string _statusMessage = string.Empty;
         private DateTime _lastUpdated;
-        private DateTime _currentDate = DateTime.Now;
+        private string _currentDate = string.Empty;
         private DateTime? _sunrise;
         private DateTime? _sunset;
 
-        public string Location { 
-            get => _location; 
-            set => SetProperty(ref _location, value); 
+        public string Location {
+            get => _location;
+            set => SetProperty(ref _location, value);
         }
         
-        public double Temperature { 
-            get => _temperature; 
-            set => SetProperty(ref _temperature, value); 
+        public double Temperature {
+            get => _temperature;
+            set => SetProperty(ref _temperature, value);
         }
         
-        public string WindDirection { 
-            get => _windDirection; 
-            set => SetProperty(ref _windDirection, value); 
+        public string WindDirection {
+            get => _windDirection;
+            set => SetProperty(ref _windDirection, value);
         }
         
-        public double WindSpeed { 
-            get => _windSpeed; 
-            set => SetProperty(ref _windSpeed, value); 
+        public double WindSpeed {
+            get => _windSpeed;
+            set => SetProperty(ref _windSpeed, value);
         }
 
         public int BeaufortScale
         {
-            get => _beaufortScale; 
+            get => _beaufortScale;
             set => SetProperty(ref _beaufortScale, value);
         }
         
-        public double Humidity { 
-            get => _humidity; 
-            set => SetProperty(ref _humidity, value); 
+        public double Humidity {
+            get => _humidity;
+            set => SetProperty(ref _humidity, value);
         }
         
-        public double Pressure { 
-            get => _pressure; 
-            set => SetProperty(ref _pressure, value); 
+        public double Pressure {
+            get => _pressure;
+            set => SetProperty(ref _pressure, value);
         }
         
-        public double Cloudiness { 
-            get => _cloudiness; 
-            set => SetProperty(ref _cloudiness, value); 
+        public double Cloudiness {
+            get => _cloudiness;
+            set => SetProperty(ref _cloudiness, value);
         }
         
-        public WeatherSymbol CurrentWeather { 
-            get => _currentWeather; 
+        public WeatherSymbol CurrentWeather {
+            get => _currentWeather;
             set {
                 if (SetProperty(ref _currentWeather, value))
                 {
@@ -86,8 +86,8 @@ namespace WeatherApp.ViewModels
         }
         
         public bool IsLoading 
-        { 
-            get => _isLoading; 
+        {
+            get => _isLoading;
             set 
             {
                 if (SetProperty(ref _isLoading, value))
@@ -108,7 +108,7 @@ namespace WeatherApp.ViewModels
             set => SetProperty(ref _lastUpdated, value);
         }
         
-        public DateTime CurrentDate
+        public string CurrentDate
         {
             get => _currentDate;
             private set => SetProperty(ref _currentDate, value);
@@ -140,21 +140,17 @@ namespace WeatherApp.ViewModels
         
         public string WeatherDescription => DetermineWeatherDescription();
         
-        public BitmapImage? WeatherIcon
+        public BitmapImage WeatherIcon
         {
             get
             {
                 try
                 {
-                    var uri = $"pack://application:,,,/WeatherApp;component/Assets/{CurrentWeather}.png";
+                    var uri = new Uri($"ms-appx:///Assets/{CurrentWeather}.png");
                     System.Diagnostics.Debug.WriteLine($"Loading weather icon from: {uri}");
                     
                     var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(uri);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    bitmap.Freeze();
+                    bitmap.UriSource = uri;
                     
                     System.Diagnostics.Debug.WriteLine("Weather icon loaded successfully");
                     return bitmap;
@@ -173,14 +169,13 @@ namespace WeatherApp.ViewModels
         {
             _cacheService = new WeatherCacheService();
             RefreshCommand = new RelayCommand(async _ => await RefreshWeatherDataAsync());
-            PropertyChanged += (s, e) => { }; // Initialize the event
             
             // Set up timer to update current date/time
-            var timer = new System.Windows.Threading.DispatcherTimer
+            var timer = new Microsoft.UI.Xaml.DispatcherTimer
             {
                 Interval = TimeSpan.FromSeconds(1)
             };
-            timer.Tick += (s, e) => CurrentDate = DateTime.Now;
+            timer.Tick += (s, e) => CurrentDate = $"{DateTime.Now:dddd, MMMM d, yyyy}";
             timer.Start();
             
             // Initial load with location
@@ -380,14 +375,14 @@ namespace WeatherApp.ViewModels
         }
 
         #region INotifyPropertyChanged Implementation
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
         {
             if (Equals(field, value)) return false;
             field = value;
@@ -425,25 +420,24 @@ namespace WeatherApp.ViewModels
     }
     
     // Continued implementation of RelayCommand class
-    public class RelayCommand : ICommand
+    public partial class RelayCommand : ICommand
     {
         private readonly Func<object, Task> _asyncExecute;
-        private readonly Func<object, bool>? _canExecute;
+        private readonly Func<object, bool> _canExecute;
         private bool _isExecuting;
 
-        public RelayCommand(Func<object, Task> execute, Func<object, bool>? canExecute = null)
+        public RelayCommand(Func<object, Task> execute, Func<object, bool> canExecute = null)
         {
             _asyncExecute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
-            CanExecuteChanged += (s, e) => { }; // Initialize the event
         }
 
-        public bool CanExecute(object? parameter)
+        public bool CanExecute(object parameter)
         {
-            return !_isExecuting && (_canExecute == null || _canExecute(parameter!));
+            return !_isExecuting && (_canExecute == null || _canExecute(parameter));
         }
 
-        public async void Execute(object? parameter)
+        public async void Execute(object parameter)
         {
             if (!CanExecute(parameter))
                 return;
@@ -452,7 +446,7 @@ namespace WeatherApp.ViewModels
             {
                 _isExecuting = true;
                 RaiseCanExecuteChanged();
-                await _asyncExecute(parameter!);
+                await _asyncExecute(parameter);
             }
             finally
             {
@@ -461,7 +455,7 @@ namespace WeatherApp.ViewModels
             }
         }
 
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler CanExecuteChanged;
 
         public void RaiseCanExecuteChanged() => 
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
